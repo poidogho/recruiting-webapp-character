@@ -52,3 +52,5 @@ export const initialAttributes = {
 export const calculateMaxSkillsScore = (modifier) => {
   return 10 + 4 * modifier;
 };
+
+export const API_URL = `https://recruiting.verylongdomaintotestwith.ca/api/{poidogho}/character`;

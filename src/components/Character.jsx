@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import styled from 'styled-components';
 import Header from './header';
 import Classes from './classes';
@@ -6,7 +6,7 @@ import Attributes from './attributes';
 import Skills from './skills';
 import SkillCheck from './skillCheck';
 import Requirements from './requirements';
-import { CLASS_LIST, SKILL_LIST } from '../consts';
+import { CLASS_LIST } from '../consts';
 import {
   calModifier,
   initialSkillsState,
@@ -14,7 +14,7 @@ import {
   calculateMaxSkillsScore,
 } from '../utils';
 
-const Character = () => {
+const Character = ({ count, saveAllCharacters }) => {
   const maxPoints = 70;
   const [attributes, setAttributes] = useState(initialAttributes);
   const [character, setCharacter] = useState(undefined);
@@ -33,23 +33,26 @@ const Character = () => {
     return acc + attributes[curr].score;
   }, 0);
 
-  const shouldDisplayRed = (type) => {
-    for (const value of Object.keys(CLASS_LIST)) {
-      const char = CLASS_LIST[value][type];
-      console.log(value, type, char, attributes[type].score);
-      if (attributes[type].score > char) {
-        setDisplayRed({
-          ...displayRed,
-          [value]: true,
-        });
-      } else {
-        setDisplayRed({
-          ...displayRed,
-          [value]: false,
-        });
+  const shouldDisplayRed = useCallback(
+    (type) => {
+      for (const value of Object.keys(CLASS_LIST)) {
+        const char = CLASS_LIST[value][type];
+        console.log(value, type, char, attributes[type].score);
+        if (attributes[type].score > char) {
+          setDisplayRed({
+            ...displayRed,
+            [value]: true,
+          });
+        } else {
+          setDisplayRed({
+            ...displayRed,
+            [value]: false,
+          });
+        }
       }
-    }
-  };
+    },
+    [attributes, displayRed]
+  );
 
   const config = [
     {
@@ -93,7 +96,7 @@ const Character = () => {
     }
 
     setSkills(initialSkillsState({ attributes }));
-    shouldDisplayRed(attribute);
+    // shouldDisplayRed(attribute);
   };
 
   const onSkillClick = (type, index) => {
@@ -121,9 +124,36 @@ const Character = () => {
       );
   };
 
+  const apiAttributes = Object.keys(attributes).reduce((acc, attribute) => {
+    const { score } = attributes[attribute];
+
+    return {
+      ...acc,
+      [attribute]: score,
+    };
+  }, {});
+
+  const apiSkills = skills.reduce((acc, skill) => {
+    const { name, total } = skill;
+
+    return {
+      ...acc,
+      [name]: total,
+    };
+  }, {});
+
+  const saveCharacters = async (count) => {
+    const results = saveAllCharacters(count, {
+      attributes: apiAttributes,
+      skills: apiSkills,
+    });
+
+    return results;
+  };
+
   return (
     <Section>
-      <Header name='Character' />
+      <Header name={`Character: ${count}`} />
       <SkillCheck />
       <Container>
         <Attributes
@@ -147,6 +177,7 @@ const Character = () => {
 const Section = styled.div`
   padding: 10px;
   text-align: center;
+  border: 1px solid black;
 `;
 
 const Container = styled.div`
